@@ -344,6 +344,8 @@ static int hv_bounce_pkt_list_alloc(struct vmbus_channel *channel, u32 count)
 	spin_unlock_irqrestore(&channel->bp_lock, flags);
 	return 0;
 err_free:
+	
+	printk("%s: %d failure channel = %llx\n", __FUNCTION__, __LINE__, (unsigned long long)channel);
 	hv_bounce_pkt_list_free(channel, &bounce_pkt_head);
 	return -ENOMEM;
 }
@@ -363,9 +365,13 @@ int hv_bounce_resources_reserve(struct vmbus_channel *channel,
 	if (!hv_is_isolation_supported())
 		return 0;
 
+	printk("%s: %d min bytes: %u (channel = %llx)\n", __FUNCTION__, __LINE__, min_bounce_bytes, (unsigned long long)channel);
+
 	/* Resize operation is currently not supported */
-	if (unlikely((!min_bounce_bytes || channel->min_bounce_resource_count)))
-		return -EINVAL;
+	if (unlikely((!min_bounce_bytes || channel->min_bounce_resource_count))) {
+		printk("%s: %d FAIL min bytes: %u (channel = %llx) ->min_bounce_resource_count %u\n", __FUNCTION__, __LINE__, min_bounce_bytes, (unsigned long long)channel, channel->min_bounce_resource_count);
+		// return -EINVAL;
+	}
 
 	/*
 	 * Get the page count and round it up to the min bounce pages supported
@@ -376,9 +382,12 @@ int hv_bounce_resources_reserve(struct vmbus_channel *channel,
 	spin_lock_irqsave(&channel->bp_lock, flags);
 	channel->min_bounce_resource_count = round_up_count;
 	spin_unlock_irqrestore(&channel->bp_lock, flags);
+
+	printk("%s: %d round up count: %u (channel = %llx)\n", __FUNCTION__, __LINE__, round_up_count, (unsigned long long)channel);
 	ret = hv_bounce_pkt_list_alloc(channel, round_up_count);
 	if (ret < 0)
 		return ret;
+	printk("%s: %d SECOND round up count: %u ret %d (channel = %llx)\n", __FUNCTION__, __LINE__, round_up_count, ret, (unsigned long long)channel);
 	return hv_bounce_page_list_alloc(channel, round_up_count);
 }
 EXPORT_SYMBOL_GPL(hv_bounce_resources_reserve);
@@ -468,6 +477,7 @@ static struct hv_bounce_pkt *hv_bounce_resources_assign(
 	return bounce_pkt;
 err_free:
 	/* This will also reclaim any allocated bounce pages */
+	printk("%s: %d failure channel = %llx\n", __FUNCTION__, __LINE__, (unsigned long long)channel);
 	hv_bounce_resources_release(channel, bounce_pkt);
 	return NULL;
 }
@@ -569,12 +579,17 @@ int hv_init_channel_ivm(struct vmbus_channel *channel)
 	INIT_LIST_HEAD(&channel->bounce_pkt_free_list_head);
 
 	channel->bounce_pkt_cache = KMEM_CACHE(hv_bounce_pkt, 0);
-	if (unlikely(!channel->bounce_pkt_cache))
+	if (unlikely(!channel->bounce_pkt_cache)) {
+		printk("%s: %d failure channel = %llx\n", __FUNCTION__, __LINE__, (unsigned long long)channel);
 		return -ENOMEM;
+	}
 	channel->bounce_page_cache = KMEM_CACHE(hv_bounce_page_list, 0);
-	if (unlikely(!channel->bounce_page_cache))
+	if (unlikely(!channel->bounce_page_cache)) {
+		printk("%s: %d failure channel = %llx\n", __FUNCTION__, __LINE__, (unsigned long long)channel);
 		return -ENOMEM;
+	}
 
+	printk("%s: %d success channel = %llx\n", __FUNCTION__, __LINE__, (unsigned long long)channel);
 	return 0;
 }
 

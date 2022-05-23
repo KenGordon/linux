@@ -1397,6 +1397,10 @@ struct netvsc_device *rndis_filter_device_add(struct hv_device *dev,
 	 * NOTE! Once the channel is created, we may get a receive callback
 	 * (RndisFilterOnReceive()) before this call is completed
 	 */
+
+	printk("%s: %d device %llx channel %llx device_info %llx\n", __FUNCTION__, __LINE__,
+				(unsigned long long)dev, (unsigned long long)dev->channel, (unsigned long long)device_info);
+
 	net_device = netvsc_device_add(dev, device_info);
 	if (IS_ERR(net_device)) {
 		kfree(rndis_device);

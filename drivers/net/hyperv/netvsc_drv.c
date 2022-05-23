@@ -1073,6 +1073,9 @@ static int netvsc_attach(struct net_device *ndev,
 	struct bpf_prog *prog;
 	int ret = 0;
 
+	printk("%s: %d device %llx channel %llx device_info %llx ndev %llx\n", __FUNCTION__, __LINE__,
+				(unsigned long long)hdev, (unsigned long long)hdev->channel, (unsigned long long)dev_info, (unsigned long long)ndev);
+
 	nvdev = rndis_filter_device_add(hdev, dev_info);
 	if (IS_ERR(nvdev))
 		return PTR_ERR(nvdev);
@@ -2490,6 +2493,9 @@ static int netvsc_probe(struct hv_device *dev,
 		ret = -ENOMEM;
 		goto devinfo_failed;
 	}
+
+	printk("%s: %d device %llx channel %llx device_info %llx\n", __FUNCTION__, __LINE__,
+				(unsigned long long)dev, (unsigned long long)dev->channel, (unsigned long long)device_info);
 
 	nvdev = rndis_filter_device_add(dev, device_info);
 	if (IS_ERR(nvdev)) {

@@ -308,9 +308,13 @@ static int netvsc_init_buf(struct hv_device *device,
 	size_t map_words;
 	int ret = 0;
 
+	printk("%s: %d device %llx channel %llx net_device %llx device_info %llx\n", __FUNCTION__, __LINE__,
+				(unsigned long long)device, (unsigned long long)device->channel, (unsigned long long)net_device, (unsigned long long)device_info);
+
 	ret = hv_bounce_resources_reserve(device->channel,
 			PAGE_SIZE * 4096);
 	if (ret) {
+		printk("%s: %d failed %d\n", __FUNCTION__, __LINE__, ret);
 		pr_warn("Fail to reserve bounce buffer.\n");
 		return -ENOMEM;
 	}
@@ -324,6 +328,7 @@ static int netvsc_init_buf(struct hv_device *device,
 		buf_size = min_t(unsigned int, buf_size,
 				 NETVSC_RECEIVE_BUFFER_SIZE_LEGACY);
 
+	printk("%s: %d worked - buf size is %ul\n", __FUNCTION__, __LINE__, buf_size);
 	net_device->recv_buf = vzalloc(buf_size);
 	if (!net_device->recv_buf) {
 		netdev_err(ndev,
@@ -595,6 +600,8 @@ static int netvsc_connect_vsp(struct hv_device *device,
 	struct nvsp_message *init_packet;
 	int ndis_version, i, ret;
 
+	printk("%s: %d device %llx channel %llx net_device %llx device_info %llx\n", __FUNCTION__, __LINE__,
+				(unsigned long long)device, (unsigned long long)device->channel, (unsigned long long)net_device, (unsigned long long)device_info);
 	init_packet = &net_device->channel_init_pkt;
 
 	/* Negotiate the latest NVSP protocol supported */
@@ -617,7 +624,7 @@ static int netvsc_connect_vsp(struct hv_device *device,
 		goto cleanup;
 	}
 
-	pr_debug("Negotiated NVSP version:%x\n", net_device->nvsp_version);
+	printk("Negotiated NVSP version:%x\n", net_device->nvsp_version);
 
 	/* Send the ndis version */
 	memset(init_packet, 0, sizeof(struct nvsp_message));
@@ -1516,6 +1523,10 @@ struct netvsc_device *netvsc_device_add(struct hv_device *device,
 	struct net_device_context *net_device_ctx = netdev_priv(ndev);
 
 	net_device = alloc_net_device();
+
+	printk("%s: %d device %llx channel %llx net_device %llx device_info %llx\n", __FUNCTION__, __LINE__,
+				(unsigned long long)device, (unsigned long long)device->channel, (unsigned long long)net_device, (unsigned long long)device_info);
+
 	if (!net_device)
 		return ERR_PTR(-ENOMEM);
 
@@ -1574,7 +1585,7 @@ struct netvsc_device *netvsc_device_add(struct hv_device *device,
 	}
 
 	/* Channel is opened */
-	netdev_dbg(ndev, "hv_netvsc channel opened successfully\n");
+	netdev_info(ndev, "hv_netvsc channel opened successfully\n");
 
 	napi_enable(&net_device->chan_table[0].napi);
 
